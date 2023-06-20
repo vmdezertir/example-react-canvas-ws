@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useState, MouseEvent } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { ToolVariant } from 'tools/interface';
 import { Brush, Circle, Cursor, Eraser, Line, Pencil, Square } from 'tools';
 import { useCanvasStore, useToolStore } from 'store';
 
-export const useActions = (canvas: HTMLCanvasElement | null) => {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0, isCanvas: false });
+export const useActions = (canvas: HTMLCanvasElement | null, socket: WebSocket | null) => {
+  const { meetId } = useParams();
+  const [mousePos, setMousePos] = useState<{ x: number; y: number; isCanvas: boolean }>({
+    x: 0,
+    y: 0,
+    isCanvas: false,
+  });
+  const [connected, setConnected] = useState<boolean>(false);
 
   const setCanvas = useCanvasStore(state => state.setCanvas);
   const { toolName, clearTool, setTool, tool, color, lineWidth } = useToolStore(state => ({
@@ -73,9 +80,31 @@ export const useActions = (canvas: HTMLCanvasElement | null) => {
 
   const mouseHandler = useCallback((isCanvas: boolean) => setMousePos(prev => ({ ...prev, isCanvas })), [setMousePos]);
 
+  const connect = () => {
+    socket = new WebSocket(`ws://localhost:8080/meet/${meetId}`);
+
+    socket.onopen = () => {
+      console.log('Connected');
+      setConnected(true);
+      const message = {
+        event: 'connection',
+        userName: 'test',
+        meetId,
+      };
+
+      socket?.send(JSON.stringify(message));
+    };
+
+    socket.onmessage = event => {
+      const message = JSON.parse(event.data);
+      console.log('message', message);
+    };
+  };
+
   return {
     mousePos,
     mouseMoveHandler,
     mouseHandler,
+    connect,
   };
 };

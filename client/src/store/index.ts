@@ -65,3 +65,19 @@ export const useToolStore = create<ToolState>(set => ({
   removeFromRedo: () => set(state => ({ redoList: [...state.redoList.slice(0, state.redoList.length - 1)] })),
   clearTool: () => set(state => ({ color: '#000', toolName: ToolVariant.CURSOR, size: 1, undoList: [], redoList: [] })),
 }));
+
+interface UserState {
+  userName: string;
+  setUserName: (userName: string) => void;
+  isOpenModal: boolean;
+  openModal: () => void;
+  closeModal: () => void;
+}
+
+export const useUserStore = create<UserState>(set => ({
+  userName: '',
+  isOpenModal: false,
+  setUserName: userName => set(state => ({ userName })),
+  openModal: () => set(state => ({ isOpenModal: true })),
+  closeModal: () => set(state => ({ isOpenModal: false })),
+}));
