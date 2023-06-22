@@ -1,6 +1,26 @@
 .idea
 
+### client - react ###
+client/.DS_*
+client/*.log
+client/logs
+client/**/*.backup.*
+client/**/*.back.*
 client/node_modules
-server/node_modules
 
-client/build
+### server - node ###
+server/files
+server/logs
+server/*.log
+server/npm-debug.log*
+server/yarn-debug.log*
+server/yarn-error.log*
+server/lerna-debug.log*
+server/.pnpm-debug.log*
+server/node_modules
+# yarn v2
+server/.yarn/cache
+server/.yarn/unplugged
+server/.yarn/build-state.yml
+server/.yarn/install-state.gz
+server/.pnp.*

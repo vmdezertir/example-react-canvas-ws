@@ -1,10 +1,9 @@
 export enum ToolVariant {
   CURSOR = 'cursor',
   BRUSH = 'brush',
-  PENCIL = 'pencil',
-  TEXT = 'text',
+  SQUARE = 'square',
+  CIRCLE = 'circle',
   ERASER = 'eraser',
   LINE = 'line',
-  CIRCLE = 'circle',
-  SQUARE = 'square',
+  TEXT = 'text',
 }

@@ -7,11 +7,19 @@ import Tool from 'tools/Tool';
 interface CanvasState {
   canvasRef: HTMLCanvasElement | null;
   setCanvas: (canvas: HTMLCanvasElement | null) => void;
+  socket: WebSocket | null;
+  meetId: string | null;
+  setSocket: (socket: WebSocket) => void;
+  setMeetId: (meetId: string | null) => void;
 }
 
 export const useCanvasStore = create<CanvasState>(set => ({
   canvasRef: null,
-  setCanvas: canvas => set(state => ({ canvasRef: canvas })),
+  socket: null,
+  meetId: null,
+  setCanvas: canvas => set(_ => ({ canvasRef: canvas })),
+  setSocket: socket => set(_ => ({ socket })),
+  setMeetId: meetId => set(_ => ({ meetId })),
 }));
 
 interface ToolState {
@@ -39,10 +47,10 @@ export const useToolStore = create<ToolState>(set => ({
   color: '#000',
   undoList: [],
   redoList: [],
-  setTool: (tool: Tool) => set(state => ({ tool })),
-  setSize: (size: number) => set(state => ({ size })),
-  setToolName: (toolName: ToolVariant) => set(state => ({ toolName })),
-  setColor: (color: Color) => set(state => ({ color: color.toHexString() })),
+  setTool: (tool: Tool) => set(_ => ({ tool })),
+  setSize: (size: number) => set(_ => ({ size })),
+  setToolName: (toolName: ToolVariant) => set(_ => ({ toolName })),
+  setColor: (color: Color) => set(_ => ({ color: color.toHexString() })),
   addToUndo: (item: string) =>
     set(state => {
       let undoList = [...state.undoList, item];
@@ -77,7 +85,7 @@ interface UserState {
 export const useUserStore = create<UserState>(set => ({
   userName: '',
   isOpenModal: false,
-  setUserName: userName => set(state => ({ userName })),
-  openModal: () => set(state => ({ isOpenModal: true })),
-  closeModal: () => set(state => ({ isOpenModal: false })),
+  setUserName: userName => set(_ => ({ userName })),
+  openModal: () => set(_ => ({ isOpenModal: true })),
+  closeModal: () => set(_ => ({ isOpenModal: false })),
 }));

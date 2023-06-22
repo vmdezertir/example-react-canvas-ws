@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import clsx from 'clsx';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
-import { Layout } from 'antd';
+import { Layout, message } from 'antd';
+
 import { useToolStore, useUserStore } from 'store';
 import CanvasCursor from 'atoms/Cursor';
 import LeftBar from 'organisms/LeftBar';
@@ -10,26 +13,44 @@ import { ToolVariant } from 'tools/interface';
 
 import { useActions } from './useActions';
 import styles from './styles.module.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const { Footer, Content, Sider } = Layout;
 
 export const MeetRoom: React.FC = () => {
-  const socket = useRef<WebSocket | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
+  const { meetId = '' } = useParams();
+  const [messageApi, contextHolder] = message.useMessage();
 
-  const { toolName, color, lineWidth } = useToolStore(state => ({
-    toolName: state.toolName,
-    color: state.color,
-    lineWidth: state.size,
-  }));
-  const { userName, openModal, closeModal } = useUserStore(state => ({
-    userName: state.userName,
-    openModal: state.openModal,
-    closeModal: state.closeModal,
-  }));
-  const { mouseMoveHandler, mousePos, mouseHandler, connect } = useActions(canvasRef.current, socket.current);
+  const { toolName, color, size: lineWidth } = useToolStore(state => state);
+  const { userName, openModal, closeModal } = useUserStore(state => state);
+  const { mouseDownHandler, mouseMoveHandler, mousePos, mouseHandler, connect } = useActions({
+    canvas: canvasRef.current,
+    userName,
+    messageApi,
+  });
+
+  const { data, refetch } = useQuery({
+    queryKey: ['printscreen', meetId],
+    queryFn: () => axios.get(`http://localhost:8080/meet/${meetId}`).then(res => res.data),
+    enabled: false,
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (canvasRef.current && data) {
+      const { width, height } = canvasRef.current;
+      const ctx = canvasRef.current.getContext('2d');
+      const img = new Image();
+      img.src = data;
+      img.onload = async () => {
+        ctx?.clearRect(0, 0, width, height);
+        ctx?.drawImage(img, 0, 0, width, height);
+        ctx?.stroke();
+      };
+    }
+  }, [data, canvasRef.current]);
 
   const navigateToMain = useCallback(() => {
     navigate('/');
@@ -42,26 +63,29 @@ export const MeetRoom: React.FC = () => {
   }, [userName, openModal, closeModal]);
 
   useEffect(() => {
-    if (!!userName) {
+    if (userName) {
       connect();
+      refetch();
     }
   }, [userName, connect]);
 
   return (
-    <Layout>
+    <Layout style={{ minHeight: '100vh' }}>
+      {contextHolder}
       <Sider style={{ backgroundColor: '#64768b' }}>
         <LeftBar />
       </Sider>
       <Layout>
-        <Content>
+        <Content className={styles.content}>
           {mousePos.isCanvas && toolName != ToolVariant.CURSOR && (
             <CanvasCursor lineWidth={lineWidth} color={color} mousePos={mousePos} />
           )}
           <canvas
             ref={canvasRef}
             className={clsx(styles.canvas, { [styles.cursorDefault]: toolName === ToolVariant.CURSOR })}
-            height={document.body.getBoundingClientRect().height - 67}
-            width={document.body.getBoundingClientRect().width - 200}
+            height={700}
+            width={1200}
+            onMouseUp={mouseDownHandler}
             onMouseMove={mouseMoveHandler}
             onMouseEnter={() => mouseHandler(true)}
             onMouseLeave={() => mouseHandler(false)}

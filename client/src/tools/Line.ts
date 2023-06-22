@@ -1,3 +1,4 @@
+import { EEventType, EFigureType, TLineFigure } from 'types';
 import Tool from './Tool';
 
 export class Line extends Tool {
@@ -5,8 +6,8 @@ export class Line extends Tool {
   currentY: number;
   savedImg?: string;
 
-  constructor(canvas: HTMLCanvasElement) {
-    super(canvas, 'Line');
+  constructor(canvas: HTMLCanvasElement, socket: WebSocket | null, id: string) {
+    super(canvas, socket, id, EFigureType.LINE);
     this.listen();
     this.currentX = 0;
     this.currentY = 0;
@@ -28,6 +29,23 @@ export class Line extends Tool {
 
   mouseUpHandler(e: MouseEvent) {
     super.mouseUpHandler(e);
+
+    const target = e.target as HTMLCanvasElement;
+    this.socket?.send(
+      JSON.stringify({
+        eventType: EEventType.DRAW,
+        room: this.id,
+        figure: {
+          type: this.name,
+          cX: this.currentX,
+          cY: this.currentY,
+          x: e.pageX - target.offsetLeft,
+          y: e.pageY - target.offsetTop,
+          color: this.ctx?.strokeStyle,
+          borderWidth: this.ctx?.lineWidth,
+        },
+      }),
+    );
   }
 
   mouseMoveHandler(e: MouseEvent) {
@@ -55,5 +73,16 @@ export class Line extends Tool {
       this.ctx?.lineTo(x, y);
       this.ctx?.stroke();
     };
+  }
+
+  static staticDraw(ctx: CanvasRenderingContext2D, { cX, cY, x, y, color, borderWidth }: TLineFigure) {
+    ctx?.beginPath();
+    ctx?.moveTo(cX, cY);
+    ctx?.lineTo(x, y);
+    ctx?.stroke();
+    if (ctx) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = borderWidth;
+    }
   }
 }

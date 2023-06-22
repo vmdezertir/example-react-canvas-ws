@@ -1,12 +1,18 @@
+import { EFigureType } from 'types';
+
 class Tool {
   canvas: HTMLCanvasElement;
+  socket: WebSocket | null;
+  id: string;
   ctx: CanvasRenderingContext2D | null;
-  name: string;
+  name: EFigureType;
   mouseDown: boolean;
 
-  constructor(canvas: HTMLCanvasElement, name: string) {
+  constructor(canvas: HTMLCanvasElement, socket: WebSocket | null, id: string, name: EFigureType) {
     this.canvas = canvas;
-    this.name = 'Brush';
+    this.name = name;
+    this.socket = socket;
+    this.id = id;
     this.mouseDown = false;
     this.ctx = canvas.getContext('2d');
     this.destroyEvents();

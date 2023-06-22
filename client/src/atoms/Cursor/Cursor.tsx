@@ -1,5 +1,4 @@
 import React from 'react';
-import { Typography } from 'antd';
 
 import styles from './styles.module.css';
 

@@ -1,4 +1,4 @@
-import React, { FC, MouseEvent, useCallback } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import { Modal, Input, ModalProps } from 'antd';
 import { useUserStore } from 'store';
 
@@ -8,19 +8,17 @@ export interface IProps extends ModalProps {
 }
 
 export const UserModal: FC<IProps> = ({ submitHandler, closeHandler, ...props }) => {
-  const { userName, setUserName, isOpenModal, closeModal } = useUserStore(state => ({
-    userName: state.userName,
+  const [name, setName] = useState<string>('');
+  const { setUserName, isOpenModal, closeModal } = useUserStore(state => ({
     isOpenModal: state.isOpenModal,
     closeModal: state.closeModal,
     setUserName: state.setUserName,
   }));
 
-  const onOkHandler = useCallback(
-    (e: MouseEvent) => {
-      submitHandler();
-    },
-    [submitHandler],
-  );
+  const onOkHandler = useCallback(() => {
+    setUserName(name);
+    submitHandler();
+  }, [submitHandler, setUserName, name]);
 
   const onCancelHandler = useCallback(() => {
     closeModal();
@@ -30,7 +28,7 @@ export const UserModal: FC<IProps> = ({ submitHandler, closeHandler, ...props })
   }, [closeHandler, closeModal]);
 
   const nameChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUserName(e.target.value);
+    setName(e.target.value);
   };
 
   return (
@@ -39,7 +37,7 @@ export const UserModal: FC<IProps> = ({ submitHandler, closeHandler, ...props })
       open={isOpenModal}
       onOk={onOkHandler}
       onCancel={onCancelHandler}
-      okButtonProps={{ disabled: !userName }}
+      okButtonProps={{ disabled: !name }}
       {...props}
     >
       <Input onChange={nameChangeHandler} placeholder="Your name" />

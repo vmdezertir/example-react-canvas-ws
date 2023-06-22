@@ -2,9 +2,10 @@ import React, { useCallback } from 'react';
 
 import { Button, Space, Slider, Typography } from 'antd';
 
+import { EEventType } from 'types';
 import ToolBar from 'molecules/ToolBar';
 import ColorInput from 'atoms/ColorInput';
-import { useCanvasStore, useToolStore } from 'store';
+import { useCanvasStore, useToolStore, useUserStore } from 'store';
 
 import styles from './styles.module.css';
 
@@ -34,7 +35,8 @@ const PRESET_COLORS = [
 ];
 
 export const LeftBar = () => {
-  const canvas = useCanvasStore(state => state.canvasRef);
+  const { canvasRef: canvas, meetId, socket } = useCanvasStore(state => state);
+  const userName = useUserStore(state => state.userName);
   const { color, setColor, setLineWidth } = useToolStore(state => ({
     color: state.color,
     setColor: state.setColor,
@@ -48,9 +50,25 @@ export const LeftBar = () => {
 
     const ctx = canvas?.getContext('2d');
     ctx?.clearRect(0, 0, canvas.width, canvas.height);
-  }, [canvas]);
+
+    socket?.send(JSON.stringify({ room: meetId, eventType: EEventType.CLEAR, participant: userName }));
+  }, [canvas, socket, userName, meetId]);
 
   const onSliderHandler = useCallback((val: number) => setLineWidth(val), [setLineWidth]);
+
+  const saveImgHandler = () => {
+    if (!canvas) {
+      return;
+    }
+
+    const dataUrl = canvas.toDataURL();
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `meetDraw${meetId}.jpeg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -68,7 +86,7 @@ export const LeftBar = () => {
         />
       </Space>
       <Space className={styles.footer} direction="vertical">
-        <Button size={'large'} block>
+        <Button size={'large'} block onClick={saveImgHandler} disabled={!canvas}>
           Save image
         </Button>
         <Button onClick={clearHandler} size={'large'} block>
