@@ -7,20 +7,23 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
     "server": "nodemon app.js",
-    "client": "yarn start --prefix ../client/",
-    "clientinstall": "yarn install --prefix client",
-    "dev": "concurrently \"npm run server\"  \"npm run client\""
+    "client": "yarn run start --cwd ../client",
+    "clientinstall": "yarn install --cwd ../client",
+    "allinstall": "yarn install && yarn run clientinstall",
+    "dev": "concurrently -r -k \"yarn run server\"  \"yarn run client\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "express-ws": "^5.0.2"
+    "@fastify/cors": "^8.3.0",
+    "@fastify/helmet": "^10.1.1",
+    "@fastify/static": "^6.10.2",
+    "@fastify/websocket": "^8.1.0",
+    "fastify": "^4.18.0",
+    "nanoid": "^4.0.2"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0",
-    "mqemitter": "^5.0.0"
+    "concurrently": "^8.2.0"
   }
 }

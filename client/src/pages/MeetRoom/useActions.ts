@@ -117,7 +117,7 @@ export const useActions = ({ canvas, userName, messageApi }: TUseActionsProps) =
       return;
     }
 
-    const socket = new WebSocket(`ws://localhost:8080/meet/${meetId}`);
+    const socket = new WebSocket(`ws://localhost:8080/api/connect/${meetId}`);
     setSocket(socket);
     setMeetId(meetId || null);
 
@@ -155,7 +155,7 @@ export const useActions = ({ canvas, userName, messageApi }: TUseActionsProps) =
     }
     const img = canvas?.toDataURL();
     addToUndo(img);
-    axios.post(`http://localhost:8080/meet/${meetId}`, { screenImg: img });
+    axios.post(`http://localhost:8080/api/meet/image/${meetId}`, { screenImg: img });
   }, [canvas, meetId, addToUndo]);
 
   return {

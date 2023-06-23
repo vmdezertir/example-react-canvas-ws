@@ -33,7 +33,7 @@ export const MeetRoom: React.FC = () => {
 
   const { data, refetch } = useQuery({
     queryKey: ['printscreen', meetId],
-    queryFn: () => axios.get(`http://localhost:8080/meet/${meetId}`).then(res => res.data),
+    queryFn: () => axios.get(`http://localhost:8080/api/meet/image/${meetId}`).then(res => res.data),
     enabled: false,
     refetchOnWindowFocus: false,
   });
