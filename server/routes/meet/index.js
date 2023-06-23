@@ -1,6 +1,6 @@
 const path = require('node:path');
 const { readFileSync, writeFileSync } = require('node:fs');
-import { nanoid } from 'nanoid';
+const { nanoid } = require('nanoid');
 
 const getImagePath = (meetId) => path.resolve(process.cwd(), 'public/images', `${meetId}.jpg`);
 const BASE64_STR = 'data:image/png;base64,';

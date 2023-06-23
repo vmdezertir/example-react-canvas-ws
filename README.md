@@ -38,10 +38,11 @@ Install all dependencies
   yarn run allinstall
 ```
 
-Start the server
+Start the application with server
 
 ```bash
-  yarn run dev
+  yarn run server
+  yarn run client
 ```
 
 Server listens on port 8080. Simply use the http://localhost:8080/api/health to test the status of the service
