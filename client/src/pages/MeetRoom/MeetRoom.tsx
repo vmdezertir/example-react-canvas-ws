@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import { useParams } from 'react-router-dom';
 
-import { Layout, message } from 'antd';
+import { Layout, message, Modal, Spin } from 'antd';
 
-import { useToolStore, useUserStore } from 'store';
+import { useToolStore } from 'store';
 import CanvasCursor from 'atoms/Cursor';
 import LeftBar from 'organisms/LeftBar';
 import UserNameModal from 'organisms/UserModal';
@@ -13,61 +12,43 @@ import { ToolVariant } from 'tools/interface';
 
 import { useActions } from './useActions';
 import styles from './styles.module.css';
-import { useNavigate, useParams } from 'react-router-dom';
 
 const { Footer, Content, Sider } = Layout;
 
 export const MeetRoom: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const navigate = useNavigate();
   const { meetId = '' } = useParams();
+  const [sync, setOpenSync] = useState<boolean>(false);
+  const [ready, setReady] = useState<boolean>(false);
   const [messageApi, contextHolder] = message.useMessage();
 
-  const { toolName, color, size: lineWidth } = useToolStore(state => state);
-  const { userName, openModal, closeModal } = useUserStore(state => state);
-  const { mouseDownHandler, mouseMoveHandler, mousePos, mouseHandler, connect } = useActions({
-    canvas: canvasRef.current,
-    userName,
+  const [toolName, color, lineWidth] = useToolStore(state => [state.toolName, state.color, state.size]);
+  const {
+    mouseDownHandler,
+    mouseMoveHandler,
+    mousePos,
+    mouseHandler,
+    connect,
+    getImageMutation,
+    checkMeetMutation,
+    navigateToMain,
+    submitUserModal,
+  } = useActions({
+    canvasRef,
     messageApi,
+    setReady,
   });
 
-  const { data, refetch } = useQuery({
-    queryKey: ['printscreen', meetId],
-    queryFn: () => axios.get(`http://localhost:8080/api/meet/image/${meetId}`).then(res => res.data),
-    enabled: false,
-    refetchOnWindowFocus: false,
-  });
+  useEffect(() => setOpenSync(getImageMutation.isLoading), [getImageMutation.isLoading]);
+
+  useEffect(() => checkMeetMutation.mutate(meetId), [meetId]);
 
   useEffect(() => {
-    if (canvasRef.current && data) {
-      const { width, height } = canvasRef.current;
-      const ctx = canvasRef.current.getContext('2d');
-      const img = new Image();
-      img.src = data;
-      img.onload = async () => {
-        ctx?.clearRect(0, 0, width, height);
-        ctx?.drawImage(img, 0, 0, width, height);
-        ctx?.stroke();
-      };
-    }
-  }, [data, canvasRef.current]);
-
-  const navigateToMain = useCallback(() => {
-    navigate('/');
-  }, [navigate]);
-
-  useEffect(() => {
-    if (!userName) {
-      openModal();
-    }
-  }, [userName, openModal, closeModal]);
-
-  useEffect(() => {
-    if (userName) {
+    if (ready) {
       connect();
-      refetch();
+      getImageMutation.mutate(meetId);
     }
-  }, [userName, connect]);
+  }, [ready]);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -94,11 +75,23 @@ export const MeetRoom: React.FC = () => {
         <Footer style={{ textAlign: 'center' }}>©2023 Created by Magic</Footer>
       </Layout>
       <UserNameModal
-        submitHandler={closeModal}
+        submitHandler={submitUserModal}
         closable={false}
         maskClosable={false}
         keyboard={false}
         closeHandler={navigateToMain}
+      />
+      <Modal
+        centered
+        open={sync}
+        closable={false}
+        maskClosable={false}
+        keyboard={false}
+        modalRender={() => (
+          <Spin tip="Synchronization" size="large" className={styles.spin}>
+            <div className="content" />
+          </Spin>
+        )}
       />
     </Layout>
   );

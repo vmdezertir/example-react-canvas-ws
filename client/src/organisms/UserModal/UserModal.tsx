@@ -9,14 +9,15 @@ export interface IProps extends ModalProps {
 
 export const UserModal: FC<IProps> = ({ submitHandler, closeHandler, ...props }) => {
   const [name, setName] = useState<string>('');
-  const { setUserName, isOpenModal, closeModal } = useUserStore(state => ({
-    isOpenModal: state.isOpenModal,
-    closeModal: state.closeModal,
-    setUserName: state.setUserName,
-  }));
+  const [setUserName, isOpenModal, closeModal] = useUserStore(state => [
+    state.setUserName,
+    state.isOpenModal,
+    state.closeModal,
+  ]);
 
   const onOkHandler = useCallback(() => {
     setUserName(name);
+    closeModal();
     submitHandler();
   }, [submitHandler, setUserName, name]);
 

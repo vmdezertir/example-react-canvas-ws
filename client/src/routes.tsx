@@ -3,14 +3,15 @@ import { createBrowserRouter } from 'react-router-dom';
 
 import Main from 'pages/Main';
 import MeetRoom from 'pages/MeetRoom';
+import NotFound from 'pages/NotFound';
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Main />,
-  },
-  {
-    path: '/meet/:meetId',
-    element: <MeetRoom />,
+    errorElement: <NotFound />,
+    children: [
+      { path: '', element: <Main /> },
+      { path: '/meet/:meetId', element: <MeetRoom /> },
+    ],
   },
 ]);

@@ -1,19 +1,33 @@
-import { MouseEvent, useCallback, useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { MouseEvent, useCallback, useEffect, useState, useRef, MutableRefObject } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 
 import { ToolVariant } from 'tools/interface';
 import { EEventType, EFigureType, IMessage, TBrushFigure } from 'types';
 import { Brush, Circle, Cursor, Eraser, Line, Square } from 'tools';
-import { useCanvasStore, useToolStore } from 'store';
+import { useCanvasStore, useToolStore, useUserStore } from 'store';
+import { useMutation } from '@tanstack/react-query';
+
+const { REACT_APP_API_PATH: API_PATH, REACT_APP_SOCKET_PATH: SOCKET_PATH } = process.env;
 
 type TUseActionsProps = {
-  canvas: HTMLCanvasElement | null;
-  userName: string;
+  canvasRef: MutableRefObject<HTMLCanvasElement | null>;
   messageApi: any;
+  setReady: (v: boolean) => void;
 };
 
-export const useActions = ({ canvas, userName, messageApi }: TUseActionsProps) => {
+const checkMeet = async (meetId: string) => {
+  const response = await axios.get(`${API_PATH}/meet/${meetId}`);
+  return response.data;
+};
+const getMeetImage = async (meetId: string) => {
+  const response = await axios.get(`${API_PATH}/meet/image/${meetId}`);
+  return response.data;
+};
+
+export const useActions = ({ canvasRef, messageApi, setReady }: TUseActionsProps) => {
+  const canvas = canvasRef.current;
+  const navigate = useNavigate();
   const { meetId = '' } = useParams();
   const [mousePos, setMousePos] = useState<{ x: number; y: number; isCanvas: boolean }>({
     x: 0,
@@ -22,14 +36,34 @@ export const useActions = ({ canvas, userName, messageApi }: TUseActionsProps) =
   });
   const connection = useRef(false);
 
-  const { setCanvas, setSocket, setMeetId, socket: ws } = useCanvasStore(state => state);
-  const { toolName, clearTool, setTool, tool, color, size: lineWidth, addToUndo } = useToolStore(state => state);
+  const [setCanvas, setSocket, setMeetId, ws] = useCanvasStore(state => [
+    state.setCanvas,
+    state.setSocket,
+    state.setMeetId,
+    state.socket,
+  ]);
+  const [toolName, clearTool, setTool, tool, color, lineWidth, addToUndo] = useToolStore(state => [
+    state.toolName,
+    state.clearTool,
+    state.setTool,
+    state.tool,
+    state.color,
+    state.size,
+    state.addToUndo,
+  ]);
+  const [userName, openModal] = useUserStore(state => [state.userName, state.openModal]);
 
   useEffect(() => {
     canvas && setCanvas(canvas);
+  }, [setCanvas, canvas]);
 
-    return () => clearTool();
-  }, [setCanvas, clearTool, canvas]);
+  useEffect(
+    () => () => {
+      clearTool();
+      ws?.close();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!tool) {
@@ -81,6 +115,7 @@ export const useActions = ({ canvas, userName, messageApi }: TUseActionsProps) =
   const drawHandler = (message: IMessage) => {
     const { figure } = message;
     const ctx = canvas?.getContext('2d') as CanvasRenderingContext2D;
+
     switch (figure?.type) {
       case EFigureType.BRUSH:
         Brush.draw(ctx, figure);
@@ -98,7 +133,7 @@ export const useActions = ({ canvas, userName, messageApi }: TUseActionsProps) =
         Line.staticDraw(ctx, figure);
         break;
       case EFigureType.FINISH:
-        ctx.beginPath();
+        ctx && ctx.beginPath();
         break;
     }
   };
@@ -117,7 +152,7 @@ export const useActions = ({ canvas, userName, messageApi }: TUseActionsProps) =
       return;
     }
 
-    const socket = new WebSocket(`ws://localhost:8080/api/connect/${meetId}`);
+    const socket = new WebSocket(`${SOCKET_PATH}/connect/${meetId}`);
     setSocket(socket);
     setMeetId(meetId || null);
 
@@ -147,7 +182,11 @@ export const useActions = ({ canvas, userName, messageApi }: TUseActionsProps) =
           break;
       }
     };
-  }, [meetId, userName, connection]);
+  }, [meetId, userName, connection, canvas]);
+
+  const navigateToMain = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
 
   const mouseDownHandler = useCallback(() => {
     if (!canvas) {
@@ -155,8 +194,42 @@ export const useActions = ({ canvas, userName, messageApi }: TUseActionsProps) =
     }
     const img = canvas?.toDataURL();
     addToUndo(img);
-    axios.post(`http://localhost:8080/api/meet/image/${meetId}`, { screenImg: img });
+    axios.post(`${API_PATH}/meet/image/${meetId}`, { screenImg: img });
   }, [canvas, meetId, addToUndo]);
+
+  const checkMeetMutation = useMutation(checkMeet, {
+    mutationKey: ['checkMeet', meetId],
+    onSuccess: () => {
+      if (userName) {
+        setReady(true);
+      } else {
+        openModal();
+      }
+    },
+    onError: navigateToMain,
+  });
+
+  const getImageMutation = useMutation(getMeetImage, {
+    mutationKey: ['printscreen', meetId],
+    onSuccess: data => {
+      if (!canvasRef.current || !data) {
+        return null;
+      }
+      const { width, height } = canvasRef.current;
+      const ctx = canvasRef.current.getContext('2d');
+      const img = new Image();
+      img.src = data;
+      img.onload = async () => {
+        ctx?.clearRect(0, 0, width, height);
+        ctx?.drawImage(img, 0, 0, width, height);
+        ctx?.stroke();
+      };
+    },
+  });
+
+  const submitUserModal = useCallback(() => {
+    setReady(true);
+  }, [setReady]);
 
   return {
     mousePos,
@@ -164,5 +237,9 @@ export const useActions = ({ canvas, userName, messageApi }: TUseActionsProps) =
     mouseHandler,
     connect,
     mouseDownHandler,
+    getImageMutation,
+    checkMeetMutation,
+    navigateToMain,
+    submitUserModal,
   };
 };

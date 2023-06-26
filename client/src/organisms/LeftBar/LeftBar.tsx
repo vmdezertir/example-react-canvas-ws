@@ -35,13 +35,9 @@ const PRESET_COLORS = [
 ];
 
 export const LeftBar = () => {
-  const { canvasRef: canvas, meetId, socket } = useCanvasStore(state => state);
+  const [canvas, meetId, socket] = useCanvasStore(state => [state.canvasRef, state.meetId, state.socket]);
   const userName = useUserStore(state => state.userName);
-  const { color, setColor, setLineWidth } = useToolStore(state => ({
-    color: state.color,
-    setColor: state.setColor,
-    setLineWidth: state.setSize,
-  }));
+  const [color, setColor, setLineWidth] = useToolStore(state => [state.color, state.setColor, state.setSize]);
 
   const clearHandler = useCallback(() => {
     if (!canvas) {

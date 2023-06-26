@@ -7,7 +7,7 @@ This is a variant of the graphical editor with the possibility of multi-user use
 
 #### Client
 
-React, Typescript, Canvas, WS, Zustand
+React, Typescript, Canvas, WS, React Query, Zustand
 
 #### Server
 
@@ -15,7 +15,7 @@ Fastify, WS
 
 ## Screenshots
 
-![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
+![App Screenshot](assets/view.png)
 
 
 ## Run Locally

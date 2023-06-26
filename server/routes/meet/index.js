@@ -5,27 +5,32 @@ const { nanoid } = require('nanoid');
 const getImagePath = (meetId) => path.resolve(process.cwd(), 'public/images', `${meetId}.jpg`);
 const BASE64_STR = 'data:image/png;base64,';
 
-const rooms = new Set();
+const rooms = new Set(['123']);
+
+const checkRoomId = (request, reply, done) => {
+  const { meetId } = request.params;
+  const isExist = rooms.has(meetId);
+
+  if (!isExist) {
+    reply.code(404).send({ msg: 'Room with this ID does not exist' });
+  }
+
+  done();
+};
 
 const meetRoutes = (app, opts, done) => {
   // create room
   app.post('/', (request, reply) => {
     const meetId = nanoid(10);
-    rooms.set(meetId);
+    rooms.add(meetId);
 
     return reply.send({ meetId });
   });
 
   // check if this room exists
-  app.get('/:meetId', (request, reply) => {
+  app.get('/:meetId', { preHandler: [checkRoomId] }, (request, reply) => {
     const { meetId } = request.params;
-    const isExist = rooms.has(meetId);
-
-    if (isExist) {
-      return reply.send({ meetId, msg: 'Room ' });
-    }
-
-    return reply.code(404).send({ msg: 'Room with this ID does not exist' });
+    return reply.send({ meetId, msg: 'The room exists' });
   });
 
   // create a new screenshot
@@ -40,17 +45,16 @@ const meetRoutes = (app, opts, done) => {
   });
 
   // get a current screenshot
-  app.get('/image/:meetId', (request, reply) => {
+  app.get('/image/:meetId', { preHandler: [checkRoomId] }, (request, reply) => {
     const { meetId } = request.params;
-    let file;
     try {
-      file = readFileSync(getImagePath(meetId));
-    } catch (e) {
-      return reply.code(404).send({ msg: 'File not found' });
-    }
-    const data = `${BASE64_STR}${file.toString('base64')}`;
+      const file = readFileSync(getImagePath(meetId));
+      const data = `${BASE64_STR}${file.toString('base64')}`;
 
-    return reply.send(Buffer.from(data));
+      return reply.send(Buffer.from(data));
+    } catch (e) {
+      return reply.send(null);
+    }
   });
 
   done();
