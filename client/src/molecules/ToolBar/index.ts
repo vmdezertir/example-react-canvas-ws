@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import { ToolBar } from './ToolBar';
 
-export default ToolBar;
+export default memo(ToolBar);

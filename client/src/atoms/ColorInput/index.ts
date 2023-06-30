@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import { ColorInput } from './ColorInput';
 
-export default ColorInput;
+export default memo(ColorInput);

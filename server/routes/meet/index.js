@@ -5,7 +5,7 @@ const { nanoid } = require('nanoid');
 const getImagePath = (meetId) => path.resolve(process.cwd(), 'public/images', `${meetId}.jpg`);
 const BASE64_STR = 'data:image/png;base64,';
 
-const rooms = new Set(['123']);
+const rooms = new Set();
 
 const checkRoomId = (request, reply, done) => {
   const { meetId } = request.params;

@@ -91,7 +91,7 @@ export const Main: React.FC = () => {
           <Divider orientation="center">Or enter the code provided by meeting organiser</Divider>
           <Form layout="inline">
             <Space.Compact style={{ width: '300px' }}>
-              <Form.Item label="Fail" validateStatus={error ? 'error' : undefined} help={error}>
+              <Form.Item validateStatus={error ? 'error' : undefined} help={error}>
                 <Input onChange={meetIdChangeHandler} placeholder="Code" />
               </Form.Item>
               <Button

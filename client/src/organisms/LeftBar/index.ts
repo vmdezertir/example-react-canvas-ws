@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import { LeftBar } from './LeftBar';
 
-export default LeftBar;
+export default memo(LeftBar);
